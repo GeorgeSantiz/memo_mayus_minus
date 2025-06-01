@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Memorama de Vocales</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f7f7f7;
+    }
+
+    #game-board {
+      display: grid;
+      grid-template-columns: repeat(5, 100px);
+      grid-gap: 15px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    .card {
+      width: 100px;
+      height: 100px;
+      perspective: 1000px;
+      cursor: pointer;
+    }
+
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.5s;
+      transform-style: preserve-3d;
+    }
+
+    .card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-front,
+    .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 10px;
+    }
+
+    .card-back {
+      background: #ccc;
+    }
+
+    .card-front {
+      transform: rotateY(180deg);
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 10px;
+    }
+
+    #message {
+      margin-top: 20px;
+      font-size: 20px;
+      color: green;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🧠 Memorama de Vocales (Imágenes)</h1>
+  <p>Empareja la vocal mayúscula con su minúscula</p>
+
+  <div id="game-board"></div>
+  <div id="message"></div>
+  <button onclick="initGame()">🔁 Reiniciar</button>
+
+  <script>
+    const letters = ['a', 'e', 'i', 'o', 'u'];
+    let cards = [];
+    let flipped = [];
+    let matched = 0;
+
+    function initGame() {
+      cards = [];
+      flipped = [];
+      matched = 0;
+      document.getElementById('message').textContent = '';
+
+      letters.forEach(l => {
+        cards.push({ id: l + 'U', img: 'img/' + l+l + '.png', letter: l });
+        cards.push({ id: l + 'L', img: 'img/' + l + '.png', letter: l });
+      });
+
+      cards = cards.sort(() => Math.random() - 0.5);
+      const board = document.getElementById('game-board');
+      board.innerHTML = '';
+
+      cards.forEach((card, index) => {
+        const cardElem = document.createElement('div');
+        cardElem.classList.add('card');
+        cardElem.dataset.index = index;
+
+        cardElem.innerHTML = `
+          <div class="card-inner">
+            <div class="card-front">
+              <img src="${card.img}" alt="${card.letter}">
+            </div>
+            <div class="card-back">
+              <img src="img/back.png" alt="Carta">
+            </div>
+          </div>
+        `;
+
+        cardElem.addEventListener('click', () => flipCard(index));
+        board.appendChild(cardElem);
+      });
+    }
+
+    function flipCard(index) {
+      const card = cards[index];
+      const cardElement = document.querySelector(`.card[data-index="${index}"]`);
+
+      if (flipped.includes(index) || card.matched || flipped.length === 2) return;
+
+      cardElement.classList.add('flipped');
+      flipped.push(index);
+
+      if (flipped.length === 2) {
+        setTimeout(() => {
+          checkMatch();
+        }, 700);
+      }
+    }
+
+    function checkMatch() {
+      const [i1, i2] = flipped;
+      const c1 = cards[i1];
+      const c2 = cards[i2];
+
+      const e1 = document.querySelector(`.card[data-index="${i1}"]`);
+      const e2 = document.querySelector(`.card[data-index="${i2}"]`);
+
+      if (c1.letter === c2.letter && c1.id !== c2.id) {
+        c1.matched = true;
+        c2.matched = true;
+        matched++;
+
+        if (matched === 5) {
+          document.getElementById('message').textContent = '🎉 ¡Ganaste!';
+        }
+      } else {
+        e1.classList.remove('flipped');
+        e2.classList.remove('flipped');
+      }
+
+      flipped = [];
+    }
+
+    window.onload = initGame;
+  </script>
+</body>
+</html>
